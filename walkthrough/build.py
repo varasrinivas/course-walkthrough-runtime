@@ -27,6 +27,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import shutil
 import sys
 from pathlib import Path
 
@@ -234,13 +235,41 @@ h1{{font-size:1.9rem;line-height:1.2;margin:.3rem 0 .5rem;letter-spacing:-.02em}
 
 
 def build_standalone(out: Path, scenarios: list[dict], title: str, lede: str,
-                     eyebrow: str, back: str, back_label: str) -> None:
+                     eyebrow: str, back: str, back_label: str,
+                     copy_assets: str | None = None) -> None:
     out.parent.mkdir(parents=True, exist_ok=True)
     page = STANDALONE.format(title=title, lede=lede, eyebrow=eyebrow, back=back,
                              back_label=back_label, bundle=bundle(scenarios))
     out.write_text(page, encoding="utf-8")
     print(f"standalone -> {out} ({out.stat().st_size / 1024:.1f} kB, "
           f"{len(scenarios)} scenarios)")
+
+    # A scenario may reference images with a page-relative path (assets/x.png).
+    # That resolves inside the course player but not beside the standalone page,
+    # which lives one directory down. Copy them so both pages resolve the same
+    # href instead of asking scenarios to know where they are being rendered.
+    if copy_assets:
+        src = Path(copy_assets)
+        if not src.is_dir():
+            raise BuildError(f"--copy-assets: {src} is not a directory")
+        dst = out.parent / "assets"
+        dst.mkdir(exist_ok=True)
+        n = 0
+        for f in sorted(src.iterdir()):
+            if f.is_file():
+                shutil.copy(f, dst / f.name)
+                n += 1
+        print(f"  copied {n} asset(s) -> {dst}")
+
+    # Whatever the scenarios reference must actually be there.
+    refs = set(re.findall(r'src=\\?"([^"\\]+)', json.dumps(scenarios)))
+    missing = [r for r in refs
+               if not r.startswith(("http://", "https://", "data:"))
+               and not (out.parent / r).exists()]
+    if missing:
+        raise BuildError(
+            f"{out}: references {len(missing)} file(s) that do not exist beside it: "
+            f"{sorted(missing)[:5]}. Pass --copy-assets, or fix the path.")
 
 
 # ------------------------------------------------------------------- cli
@@ -259,6 +288,8 @@ def main() -> int:
     ap.add_argument("--eyebrow", default="walkthroughs")
     ap.add_argument("--back", default="../index.html")
     ap.add_argument("--back-label", default="Course")
+    ap.add_argument("--copy-assets", default=None,
+                    help="directory to copy beside the standalone page as assets/")
     ap.add_argument("--check-only", action="store_true", help="validate, build nothing")
     args = ap.parse_args()
 
@@ -295,7 +326,7 @@ def main() -> int:
             inject(target, block, scenarios, Path(args.out) if args.out else target)
         if args.standalone:
             build_standalone(Path(args.standalone), scenarios, args.title, args.lede,
-                             args.eyebrow, args.back, args.back_label)
+                             args.eyebrow, args.back, args.back_label, args.copy_assets)
         return 0
 
     except BuildError as e:
