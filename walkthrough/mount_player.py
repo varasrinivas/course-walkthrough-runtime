@@ -62,7 +62,11 @@ def main() -> int:
 
     mount = (f'<div data-wt="{args.scenario}"'
              + (f' data-wt-theme="{args.theme}"' if args.theme else "") + '></div>')
-    if mount in html:
+    # The section is stored inside MODS via json.dumps, so the mount lands in the
+    # file with its quotes escaped. Checking only the raw form made this
+    # non-idempotent on kit-format players: a second run appended a duplicate
+    # section instead of skipping. Check both forms.
+    if mount in html or json.dumps(mount)[1:-1] in html:
         print(f"{args.module}: already mounted, skipping")
         return 0
 
