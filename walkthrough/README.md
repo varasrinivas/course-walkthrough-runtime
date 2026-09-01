@@ -109,6 +109,39 @@ A step may carry its own `source`, so a narrated scenario can pay off with real
 numbers and have those numbers gated individually. That is what
 `knowledge-graph/walkthroughs/M00-147-files.json` does.
 
+### The second half: replayed lines must still say what they said
+
+A resolving path is not the same as a truthful walkthrough. The failure it misses
+is the one that actually happens: somebody edits the source, the replayed grep
+output in the answer key keeps the old text, and nothing complains because the
+path still resolves. A walkthrough exists to show the reader the answer, so a
+stale one is worse than none.
+
+So wherever an output line (`out`, `out-pass`, `out-fail`) replays a source line
+in the shape `path:NN  content`, and `path` is one the scenario already cites,
+`build.py` reads line NN and requires the shown content to be in it:
+
+```
+BUILD FAILED: cc-ep33-eager-meter step 3: shows src/components/RushMeter.jsx:13 as
+    refetchInterval: 300, // lunch moves fast — never show a stale queue
+  but that line reads
+    refetchInterval: 500, // lunch moves fast — never show a stale queue
+  Re-measure it, or stop citing the line.
+```
+
+Citing a line past the end of the file fails the same way.
+
+Two deliberate accommodations: content after an `…` or `...` is treated as
+elided, because trimming a long line to fit the card is honest; and a shown
+fragment under 12 characters is ignored as too short to be a quotation.
+
+**What it does not check.** Numbers a step computes, prose it writes, and output
+no source file contains — a wallet balance, a test count, an API response body.
+Those are still only as good as the person who measured them. The check is
+narrow on purpose: it never fails a scenario that is telling the truth, so a
+failure always means something is genuinely wrong.
+
+
 ## Building
 
 ```bash

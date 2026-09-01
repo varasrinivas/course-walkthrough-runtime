@@ -9,8 +9,10 @@ Two outputs, one scenario set (the priorauth-sdd-course discipline):
   2. standalone the quick reference — one page, every scenario behind a tab.
 
 The honesty gate: a scenario whose provenance is "measured" must cite a source
-file that actually exists. A broken citation fails the build rather than
-shipping a number nobody can trace. Scenarios marked "illustrative" are allowed
+file that actually exists, and wherever it replays a line of that file as
+"path:NN content", the file's line NN must still say so. A broken citation, or
+one the source has drifted away from, fails the build rather than shipping a
+number nobody can trace. Scenarios marked "illustrative" are allowed
 without a source but must say so, and the runtime prints that label on screen.
 
 Usage:
@@ -39,6 +41,15 @@ START = "<!-- WT:START -->"
 END = "<!-- WT:END -->"
 
 VALID_KINDS = {"prompt", "claude", "tool", "out", "out-pass", "out-fail", "gate"}
+OUTPUT_KINDS = {"out", "out-pass", "out-fail"}
+
+# A displayed line replaying grep or editor output: "path/to/File.ext:12  content".
+LINE_REF = re.compile(
+    r"([\w./-]+\.(?:java|jsx|js|ts|tsx|py|sql|ya?ml|md|sh|json|css|txt)):(\d+)")
+ELISION = re.compile(r"…|\.\.\.")
+ENTITIES = (("&rarr;", "->"), ("&mdash;", "-"), ("&ndash;", "-"),
+            ("&hellip;", "..."), ("&quot;", '"'), ("&lt;", "<"),
+            ("&gt;", ">"), ("&amp;", "&"))
 VALID_VIEWS = {"json", "spec", "rows", "diff", "tests", "note", "stack",
                "receipt", "bars", "window"}
 
@@ -134,6 +145,87 @@ def validate(scenarios: list[dict], root: Path) -> list[str]:
                     if not pane:
                         continue
                     _check_view(pane.get("view"), f"{where} step {i} {side}")
+    return notes
+
+
+def _plain(text: str) -> str:
+    """Screen text as a reader sees it: no tags, no entities, one space."""
+    text = re.sub(r"<[^>]+>", "", text)
+    for ent, ch in ENTITIES:
+        text = text.replace(ent, ch)
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def _cited_sources(sc: dict) -> list[str]:
+    """Every source path the scenario or any of its steps declares."""
+    out = []
+    for holder in [sc.get("provenance") or {}] + list(sc.get("steps") or []):
+        src = holder.get("source")
+        if src:
+            out += [p.split("#", 1)[0].strip() for p in src.split(",") if p.strip()]
+    return out
+
+
+def corroborate(scenarios: list[dict], root: Path) -> list[str]:
+    """The second half of the honesty gate.
+
+    `validate` proves a cited file exists. That is not the same as proving the
+    walkthrough shows what the file says, and the gap is exactly where answer
+    keys rot: somebody edits the source, the replayed grep output keeps the old
+    text, and nothing complains because the path still resolves.
+
+    So wherever an output line replays a source line as `path:NN  content`, and
+    `path` is one the scenario already cites, read line NN and require the
+    displayed content to appear in it. Anything after an ellipsis is treated as
+    elided, because trimming a long line to fit the card is honest.
+
+    Deliberately narrow. It says nothing about numbers a step computes, prose it
+    writes, or output that no source file contains. Those still need a person.
+    """
+    notes, checked = [], 0
+    for sc in scenarios:
+        if (sc.get("provenance") or {}).get("kind") != "measured":
+            continue
+        sources = _cited_sources(sc)
+        where = f"{sc.get('id')} ({sc.get('_file')})"
+        for i, st in enumerate(sc.get("steps") or [], 1):
+            for ln in st.get("terminal") or []:
+                if ln.get("kind") not in OUTPUT_KINDS:
+                    continue
+                for line in (ln.get("text") or "").split("\n"):
+                    m = LINE_REF.search(line)
+                    if not m:
+                        continue
+                    cited, lineno = m.group(1), int(m.group(2))
+                    hits = [p for p in sources
+                            if p == cited or p.endswith("/" + cited)]
+                    if not hits:
+                        continue           # not a file this scenario vouches for
+                    path = root / hits[0]
+                    if not path.exists():
+                        continue           # validate() already reports this
+                    body = path.read_text(encoding="utf-8",
+                                          errors="replace").split("\n")
+                    checked += 1
+                    if lineno > len(body):
+                        raise BuildError(
+                            f"{where} step {i}: shows {cited}:{lineno}, but that "
+                            f"file has {len(body)} lines. The source moved and "
+                            f"the walkthrough did not.")
+                    shown = _plain(line[m.end():]).lstrip(": \t")
+                    shown = ELISION.split(shown)[0].strip()
+                    if len(shown) < 12:
+                        continue           # too short to be a quotation
+                    actual = _plain(body[lineno - 1])
+                    if shown not in actual:
+                        raise BuildError(
+                            f"{where} step {i}: shows {cited}:{lineno} as\n"
+                            f"    {shown}\n"
+                            f"  but that line reads\n"
+                            f"    {actual}\n"
+                            f"  Re-measure it, or stop citing the line.")
+    if checked:
+        notes.append(f"  {checked} replayed source line(s) matched their file")
     return notes
 
 
@@ -311,6 +403,7 @@ def main() -> int:
 
         scenarios = load_scenarios(paths)
         notes = validate(scenarios, root)
+        notes += corroborate(scenarios, root)
         print(f"{len(scenarios)} scenario(s) validated against {root}")
         for n in notes:
             print(n)
