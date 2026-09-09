@@ -301,6 +301,29 @@
   letter-spacing:.1em;background:var(--scen-color);color:#fff;padding:2px 8px;border-radius:3px}
 .wt-stage{min-height:400px}
 
+/* ---------- phones ----------
+   A grid or flex item's min-width defaults to auto, which resolves to
+   min-content. One unbreakable token — a citation listing four repo paths, a
+   src/main/java/... line in a step — then refuses to shrink and drags the whole
+   page wider than the screen. Nothing here truncates: wide content wraps, or
+   scrolls inside its own box. */
+@media (max-width:640px){
+  .wt .step,.wt .step>*,.wt .step-copy,.wt .state,.wt .state-body,
+  .wt .spec-mini-row>*,.wt .bars-row>*,.wt .rc-head>*{min-width:0}
+  .wt .step-copy h3,.wt .step-copy p,.wt .state-title,.wt .state-note,
+  .wt .scen-head h2,.wt .scen-intro,.wt .wt-cite,.wt code{overflow-wrap:anywhere}
+  .wt .wt-prov{flex-wrap:wrap;max-width:100%}
+  .wt .wt-prov-v{min-width:0;overflow-wrap:anywhere}
+  .wt.wt-embed{padding:16px 13px 18px}
+  .wt .state-body,.wt .term-body{padding-left:12px;padding-right:12px}
+  .wt table,.wt table th,.wt table td{overflow-wrap:anywhere}
+  .wt .rows th,.wt .rows td{padding-left:6px;padding-right:6px}
+  .wt .state-head{flex-wrap:wrap;row-gap:6px}
+  .wt .state-label{min-width:0;overflow-wrap:anywhere}
+  .wt .wt-cite{align-items:flex-start}
+  .wt .rc-q{white-space:normal;overflow:visible;text-overflow:clip;max-width:none}
+}
+
 @media (prefers-reduced-motion:reduce){
   .wt *,.wt{animation:none!important;transition:none!important}
 }
