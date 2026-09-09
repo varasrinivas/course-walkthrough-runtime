@@ -318,7 +318,9 @@
   .wt .state-body,.wt .term-body{padding-left:12px;padding-right:12px}
   .wt table,.wt table th,.wt table td{overflow-wrap:anywhere}
   .wt .rows th,.wt .rows td{padding-left:6px;padding-right:6px}
-  .wt .state-head{flex-wrap:wrap;row-gap:6px}
+  .wt .state-head,.wt .spec-mini-bar,.wt .stepnav{flex-wrap:wrap;row-gap:6px}
+  .wt .spec-mini-bar>*{min-width:0;overflow-wrap:anywhere}
+  .wt .spec-mini-row{grid-template-columns:1fr;gap:2px}
   .wt .state-label{min-width:0;overflow-wrap:anywhere}
   .wt .wt-cite{align-items:flex-start}
   .wt .rc-q{white-space:normal;overflow:visible;text-overflow:clip;max-width:none}
