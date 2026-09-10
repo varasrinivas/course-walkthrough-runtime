@@ -21,6 +21,20 @@ repo/
 | Path | What |
 |---|---|
 | [`walkthrough/`](walkthrough/) | The walkthrough runtime — interactive step-throughs embedded in course modules. See its [README](walkthrough/README.md) for the scenario schema and build commands. |
+| [`domain/`](domain/) | The domain runtime — links a course's own vocabulary to its definitions, so a domain explained once in module zero stays reachable from module thirty. See its [README](domain/README.md) for the corpus schema and the gate. |
+
+## domain, in one paragraph
+
+Every one of these courses anchors on a domain — UCC lien filings, prior
+authorization, a code knowledge graph — and explains it once, then assumes it.
+The domain runtime turns the first use of each domain word in each view into a
+chip that opens its definition, and puts the whole glossary behind one keypress.
+Like the walkthrough it hydrates itself off a `MutationObserver` and builds its
+own chrome, so a course integrates it by adding a single placeholder comment —
+no player code changes, and nothing that touches what a module's source says.
+Its build gate is the mirror image of the walkthrough's: where that one demands
+*the evidence you cite must exist*, this one demands *the vocabulary you use
+must be defined*.
 
 ## walkthrough, in one paragraph
 
