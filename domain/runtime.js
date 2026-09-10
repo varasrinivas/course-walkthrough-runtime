@@ -25,6 +25,7 @@
     shortcut: 'g',
     title: 'Glossary',
     subtitle: '',
+    drawerLabel: 'Domain',
   };
 
   /* Never link inside these. Three groups, all load-bearing:
@@ -404,6 +405,24 @@
       b.className = 'dg-ui dg-fab';
       document.body.appendChild(b);
     }
+
+    /* A nav drawer, when the host has one, is where a reader goes looking for a
+     * course-wide index — so take the slot rather than leave the glossary
+     * reachable only from a button they have to notice. The entry wears the
+     * drawer's own item class for the same reason the opener wears the top
+     * bar's: it should look like it was always there.
+     */
+    var slot = CFG.chrome && CFG.chrome.drawer && document.querySelector(CFG.chrome.drawer);
+    if (slot) {
+      var head = el('h4', '', CFG.drawerLabel || 'Domain');
+      var entry = el('button', CFG.chrome.item || '', label + '  ' + CFG.title);
+      entry.type = 'button';
+      entry.className += ' dg-adopted';
+      entry.addEventListener('click', function (e) { e.stopPropagation(); openPanel(); });
+      slot.textContent = '';
+      slot.appendChild(head);
+      slot.appendChild(entry);
+    }
   }
 
   // ── observer ─────────────────────────────────────────────────────────────
@@ -505,6 +524,7 @@
       if (cfg.shortcut) CFG.shortcut = cfg.shortcut;
       if (cfg.title) CFG.title = cfg.title;
       if (cfg.subtitle) CFG.subtitle = cfg.subtitle;
+      if (cfg.drawerLabel) CFG.drawerLabel = cfg.drawerLabel;
     },
     register: function (corpus) { CORPUS = corpus; INDEX = buildIndex(corpus); },
     start: start,
