@@ -269,9 +269,30 @@ def report(corpus: dict, prose: str, minimum: int) -> None:
 
 # ---------------------------------------------------------------- bundling
 
+def strip_js(src: str) -> str:
+    """Drop comments and blank lines from the runtime before inlining it.
+
+    The source is heavily commented on purpose — three of its guards look
+    optional and are not — but that commentary belongs in the repo, not in
+    seventeen copies inside a course. Deliberately conservative: block comments
+    and whole-line // comments only, never a trailing one, which could sit
+    inside a string or a regex.
+    """
+    src = re.sub(r"/\*.*?\*/", "", src, flags=re.S)
+    keep = [ln for ln in src.splitlines()
+            if ln.strip() and not ln.strip().startswith("//")]
+    return "\n".join(keep)
+
+
+def strip_css(src: str) -> str:
+    src = re.sub(r"/\*.*?\*/", "", src, flags=re.S)
+    keep = [ln.strip() for ln in src.splitlines() if ln.strip()]
+    return "\n".join(keep)
+
+
 def bundle(corpus: dict) -> str:
-    css = RUNTIME_CSS.read_text(encoding="utf-8")
-    js = RUNTIME_JS.read_text(encoding="utf-8")
+    css = strip_css(RUNTIME_CSS.read_text(encoding="utf-8"))
+    js = strip_js(RUNTIME_JS.read_text(encoding="utf-8"))
     data = {k: v for k, v in corpus.items() if k in ("glossary",)}
     cfg = corpus.get("config") or {}
     cfg.setdefault("title", corpus.get("title", "Glossary"))
