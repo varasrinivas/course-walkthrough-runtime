@@ -1,0 +1,151 @@
+/* figure — the worked-example vocabulary.
+ *
+ * A course that anchors on a domain owes the reader the artefact, not a
+ * description of it. These classes draw one: the record as it really looks, the
+ * failure and the fix side by side, and a caption saying what to notice.
+ *
+ * The vocabulary is CLOSED on purpose. Authors get these classes and nothing
+ * else — no inline style, no hex — so every figure in every course themes
+ * correctly and none of them can drift into bespoke markup. check.py enforces
+ * it; see README.md.
+ *
+ * Ported from context-eng-kit, where the pattern was proven across 32 modules,
+ * and rescoped from .mv-domain to .ue-fig so any host can emit the wrapper.
+ *
+ * Theming: the palette is DEFINED here, derived from whatever base tokens the
+ * host has, so a course adopting this adds no variables of its own. The kit
+ * players declare --surface/--text/--border and re-bind them under
+ * html[data-theme="dark"]; knowledge-graph declares --bg-card/--text-primary.
+ * Either resolves; neither is required.
+ */
+
+.ue-fig {
+  --ue-bg:         var(--box-soft, var(--bg-card, color-mix(in srgb, currentColor 4%, transparent)));
+  --ue-border:     var(--accent-primary, var(--text-muted, currentColor));
+  --ue-label:      var(--text-muted, var(--text-secondary, currentColor));
+  --ue-rec-bg:     var(--surface, var(--bg-card, Canvas));
+  --ue-rec-border: var(--border, var(--code-border, currentColor));
+  --ue-chip-bg:    color-mix(in srgb, currentColor 9%, transparent);
+  --ue-out-bg:     var(--code-bg, #14120d);
+  --ue-out-text:   #ded6c8;
+  /* the five context layers, in the order a receipt itemises them */
+  --ue-l1: #4a6741;  --ue-l2: #2e6b8a;  --ue-l3: #8b5e3c;
+  --ue-l4: #7a4a8c;  --ue-l5: #b8860b;
+  /* Internal names, deliberately not the host's own correct/wrong tokens.
+     Redeclaring those here in terms of themselves would be a var() cycle, which
+     computes to invalid rather than falling back, and the verdict chips would
+     lose their colour entirely. */
+  --ue-ok-bg:     var(--correct-bg, color-mix(in srgb, #3f8f5f 16%, transparent));
+  --ue-ok-text:   var(--correct-text, #2f7d4f);
+  --ue-ok-line:   var(--correct-border, #3f8f5f);
+  --ue-bad-bg:    var(--wrong-bg, color-mix(in srgb, #c0392b 16%, transparent));
+  --ue-bad-text:  var(--wrong-text, #b03a2b);
+  --ue-bad-line:  var(--wrong-border, #c0392b);
+}
+html[data-theme="dark"] .ue-fig,
+.ue-fig.ue-dark {
+  --ue-l1: #8fb884;  --ue-l2: #79b6d6;  --ue-l3: #cc9a70;
+  --ue-l4: #b58fc7;  --ue-l5: #d9b04a;
+  --ue-out-bg: #100e0a;
+}
+
+.ue-fig .ue-label { font-family:var(--font-mono); font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--ue-label); margin-bottom:8px; }
+.ue-fig .ue-title { font-family:var(--font-display); font-size:15px; font-weight:500; margin-bottom:12px; color:var(--text); }
+.ue-fig .ue-body { font-size:14px; color:var(--text); line-height:1.6; }
+.ue-fig .ue-body > :last-child { margin-bottom:0; }
+.ue-fig .ue-cap {
+  margin-top:12px; padding-top:10px; border-top:1px solid var(--ue-rec-border);
+  font-size:13px; color:var(--text-muted); font-style:italic; line-height:1.6;
+}
+
+/* the filing record card — mono field rows, the artifact itself */
+.ue-fig .ue-rec {
+  background:var(--ue-rec-bg); border:1px solid var(--ue-rec-border); border-radius:5px;
+  padding:12px 14px; margin-bottom:12px; overflow-x:auto;
+}
+.ue-fig .ue-rec-h {
+  font-family:var(--font-mono); font-size:11px; letter-spacing:1px; text-transform:uppercase;
+  color:var(--text-muted); padding-bottom:8px; margin-bottom:8px; border-bottom:1px solid var(--ue-rec-border);
+}
+.ue-fig .ue-f { display:flex; gap:10px; align-items:baseline; padding:3px 0; flex-wrap:wrap; }
+.ue-fig .ue-fk {
+  font-family:var(--font-mono); font-size:11px; letter-spacing:.5px; text-transform:uppercase;
+  color:var(--text-muted); flex:0 0 132px;
+}
+.ue-fig .ue-fv { font-family:var(--font-mono); font-size:12.5px; color:var(--text); flex:1 1 220px; word-break:break-word; }
+.ue-fig .ue-ann { font-size:12.5px; color:var(--ue-label); font-style:italic; flex:1 1 100%; padding-left:142px; }
+.ue-fig .ue-mark { background:var(--ue-chip-bg); border-bottom:1.5px solid var(--ue-border); padding:0 2px; }
+
+/* side-by-side panels */
+.ue-fig .ue-cols { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:12px; align-items:start; }
+.ue-fig .ue-panel { background:var(--ue-rec-bg); border:1px solid var(--ue-rec-border); border-radius:5px; padding:12px 14px; min-width:0; }
+.ue-fig .ue-panel-h {
+  font-family:var(--font-mono); font-size:11px; letter-spacing:1px; text-transform:uppercase;
+  color:var(--text-muted); margin-bottom:8px;
+}
+
+/* the five context layers, as stacked chips */
+.ue-fig .ue-layers { margin-bottom:10px; }
+.ue-fig .ue-layer {
+  display:flex; gap:10px; align-items:baseline; flex-wrap:wrap;
+  border-left:3px solid var(--ue-chip-bg); background:var(--ue-chip-bg);
+  border-radius:0 4px 4px 0; padding:5px 9px; margin-bottom:4px;
+}
+.ue-fig .ue-l1 { border-left-color:var(--ue-l1); background:color-mix(in srgb, var(--ue-l1) 13%, transparent); }
+.ue-fig .ue-l2 { border-left-color:var(--ue-l2); background:color-mix(in srgb, var(--ue-l2) 13%, transparent); }
+.ue-fig .ue-l3 { border-left-color:var(--ue-l3); background:color-mix(in srgb, var(--ue-l3) 13%, transparent); }
+.ue-fig .ue-l4 { border-left-color:var(--ue-l4); background:color-mix(in srgb, var(--ue-l4) 13%, transparent); }
+.ue-fig .ue-l5 { border-left-color:var(--ue-l5); background:color-mix(in srgb, var(--ue-l5) 13%, transparent); }
+.ue-fig .ue-lname {
+  font-family:var(--font-mono); font-size:10.5px; letter-spacing:1px; text-transform:uppercase;
+  color:var(--text-muted); flex:0 0 58px;
+}
+.ue-fig .ue-lnote { font-size:13px; color:var(--text); flex:1 1 160px; }
+
+/* model output */
+.ue-fig .ue-out {
+  background:var(--ue-out-bg); color:var(--ue-out-text); border-radius:5px;
+  padding:10px 12px; margin-bottom:8px; overflow-x:auto;
+  font-family:var(--font-mono); font-size:12.5px; line-height:1.55; white-space:pre-wrap; word-break:break-word;
+}
+
+/* verdicts */
+.ue-fig .ue-ok, .ue-fig .ue-bad {
+  font-family:var(--font-mono); font-size:12px; padding:5px 9px;
+  border-radius:4px; margin-bottom:8px; line-height:1.5;
+}
+.ue-fig .ue-ok { background:var(--ue-ok-bg); color:var(--ue-ok-text); border-left:3px solid var(--ue-ok-line); }
+.ue-fig .ue-bad { background:var(--ue-bad-bg);   color:var(--ue-bad-text);   border-left:3px solid var(--ue-bad-line); }
+
+/* compact data table — the course had no table styles at all */
+.ue-fig .ue-tab { width:100%; border-collapse:collapse; font-size:12.5px; margin-bottom:12px; display:block; overflow-x:auto; }
+.ue-fig .ue-tab thead tr, .ue-fig .ue-tab tbody tr { display:table; width:100%; table-layout:fixed; }
+.ue-fig .ue-tab th {
+  font-family:var(--font-mono); font-size:10.5px; letter-spacing:1px; text-transform:uppercase;
+  color:var(--text-muted); text-align:left; font-weight:500;
+  padding:6px 8px; border-bottom:1px solid var(--ue-border);
+}
+.ue-fig .ue-tab td { padding:6px 8px; border-bottom:1px solid var(--ue-rec-border); vertical-align:top; color:var(--text); word-break:break-word; }
+.ue-fig .ue-tab tr:last-child td { border-bottom:none; }
+.ue-fig .ue-tab .t-mono { font-family:var(--font-mono); font-size:11.5px; }
+.ue-fig .ue-tab .t-ok { color:var(--ue-ok-text); }
+.ue-fig .ue-tab .t-bad { color:var(--ue-bad-text); }
+
+/* token boundary chips */
+.ue-fig .ue-tok {
+  display:inline-block; font-family:var(--font-mono); font-size:11.5px;
+  background:var(--ue-chip-bg); border:1px solid var(--ue-rec-border);
+  border-radius:3px; padding:1px 4px; margin:0 2px 3px 0; white-space:pre;
+}
+
+/* connectors and asides */
+.ue-fig .ue-arrow { text-align:center; color:var(--text-muted); font-size:14px; line-height:1; margin:2px 0 8px; }
+.ue-fig .ue-note { font-size:13px; color:var(--text-muted); line-height:1.6; margin-bottom:10px; }
+.ue-fig .ue-body p { margin-bottom:10px; }
+.ue-fig code { font-family:var(--font-mono); font-size:12px; background:var(--ue-chip-bg); padding:1px 5px; border-radius:3px; }
+
+@media(max-width:600px) {
+  .ue-cols { grid-template-columns:1fr; }
+  .ue-fk { flex:0 0 100%; }
+  .ue-ann { padding-left:0; }
+}
